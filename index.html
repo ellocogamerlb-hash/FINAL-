@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Sweet Carousel • POS Vintage</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { transition: all 0.15s ease; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #fef7e8;
+      background-image: radial-gradient(circle at 10% 30%, rgba(253, 230, 200, 0.3) 2%, transparent 2.5%);
+      background-size: 28px 28px;
+    }
+    .font-serif { font-family: 'Playfair Display', serif; }
+    .vintage-card {
+      background: rgba(255, 253, 245, 0.92);
+      backdrop-filter: blur(1px);
+      border-radius: 2rem;
+      border: 1px solid #fbe2c5;
+      box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(251, 191, 126, 0.2) inset;
+    }
+    .btn-primary {
+      background: #d9b48b;
+      color: white;
+      box-shadow: 0 4px 8px rgba(170, 110, 60, 0.15);
+    }
+    .btn-primary:hover { background: #c29a6b; transform: scale(0.98); }
+    .product-img {
+      width: 52px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 18px;
+      border: 1px solid #ffe0c0;
+      background: #fff7ef;
+    }
+    .seccion { display: none; }
+    .seccion.active { display: block; animation: gentleAppear 0.25s ease; }
+    @keyframes gentleAppear {
+      0% { opacity: 0; transform: translateY(6px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .tab-btn {
+      background: transparent;
+      color: #7c5a42;
+      border-radius: 2rem;
+      padding: 0.5rem 1.2rem;
+      font-weight: 500;
+    }
+    .tab-btn.active {
+      background: #e7cfb5;
+      color: #4d2f18;
+      box-shadow: 0 2px 8px rgba(150, 90, 40, 0.1);
+    }
+    input, .input-vintage, select {
+      background-color: #fffcf5;
+      border: 1.5px solid #f2dec6;
+      border-radius: 1.8rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+    }
+    input:focus, select:focus {
+      border-color: #dbb082;
+      outline: none;
+      box-shadow: 0 0 0 2px #f7e0ca;
+    }
+    .stock-badge {
+      background: #fcf3e8;
+      border-radius: 40px;
+      padding: 2px 10px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: #b47c48;
+    }
+    button:active { transform: scale(0.97); }
+    .codigo-badge {
+      background: #f0e6d8;
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 0.7rem;
+      font-family: monospace;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .codigo-badge button {
+      background: none;
+      border: none;
+      color: #b87333;
+      cursor: pointer;
+      font-size: 0.7rem;
+      padding: 0 4px;
+    }
+    .codigo-badge button:hover { color: #c0392b; transform: scale(1.1); }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; margin: 0; }
+      #modal-ticket { display: block !important; position: static; width: 100%; max-width: 320px; margin: auto; }
+    }
+    .entrada-item {
+      background: #fffaf2;
+      border-radius: 1.5rem;
+      padding: 0.75rem;
+      margin-bottom: 0.75rem;
+      border-left: 6px solid #d9b48b;
+    }
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 1rem;
+      border: 1px solid #f2dec6;
+      max-height: 250px;
+      overflow-y: auto;
+      z-index: 50;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    .search-result-item {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      border-bottom: 1px solid #f2dec6;
+      transition: background 0.1s;
+    }
+    .search-result-item:hover {
+      background: #fef7e8;
+    }
+    .search-result-item:last-child {
+      border-bottom: none;
+    }
+    .codigo-input-group {
+      background: #fffaf0;
+      border-radius: 1.5rem;
+      padding: 1rem;
+      border: 1px solid #f5e2ca;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-stone-800">
+
+  <!-- ================= BARRA DE ACCESO SUPERIOR (LOG IN SUPERIOR) ================= -->
+  <div id="top-login-bar" class="no-print bg-gradient-to-r from-[#fff9f0] to-[#fdf2e2] border-b border-amber-200/70 px-4 py-2 flex items-center justify-between text-xs sm:text-sm">
+    <div id="login-status-message" class="flex items-center gap-2 text-stone-600 font-medium">
+      <span class="text-rose-300 animate-pulse"><i class="fas fa-ribbon"></i></span>
+      <span id="status-text">Modo Local (Sin sincronizar)</span>
+    </div>
+    <div id="login-action-container">
+      <!-- Botón de Login Inteligente -->
+      <button id="btn-google-login" class="flex items-center gap-2 bg-white hover:bg-[#fffdfa] text-stone-700 border border-[#e8d2b8] rounded-full py-1 px-3.5 shadow-sm transition active:scale-95">
+        <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/web-24dp/logo_googleg_color_24dp.png" alt="Google" class="w-3.5 h-3.5">
+        <span class="font-medium">Respaldar en Google</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= CONTENIDO GLOBAL DEL POS (SIEMPRE VISIBLE) ================= -->
+  <div id="pos-content">
+
+    <div class="sticky top-0 z-50 no-print bg-white/70 backdrop-blur-md border-b border-amber-100 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-200 to-rose-100 flex items-center justify-center shadow-sm">
+            <i class="fas fa-carousel text-amber-700 text-xl"></i>
+          </div>
+          <h1 class="text-2xl font-serif font-semibold tracking-wide text-stone-700">Sweet <span class="text-amber-700">Carousel</span></h1>
+        </div>
+        <div class="flex flex-wrap gap-1 bg-amber-50/60 rounded-full p-1 shadow-inner">
+          <button onclick="cambiarSeccion(0)" class="tab-btn text-sm flex items-center gap-1"><i class="fas fa-box"></i> <span class="hidden sm:inline">Inventario</span></button>
+          <button onclick="cambiarSeccion(1)" class="tab-btn active text-sm flex items-center gap-1"><i class="fas fa-cash-register"></i> <span class="hidden sm:inline">Ventas</span></button>
+          <button onclick="cambiarSeccion(2)" class="tab-btn text-sm flex items-center gap-1"><i class="fas fa-chart-line"></i> <span class="hidden sm:inline">Estadísticas</span></button>
+          <button onclick="cambiarSeccion(3)" class="tab-btn text-sm flex items-center gap-1"><i class="fas fa-truck"></i> <span class="hidden sm:inline">Entradas</span></button>
+          <button onclick="cambiarSeccion(4)" class="tab-btn text-sm flex items-center gap-1"><i class="fas fa-history"></i> <span class="hidden sm:inline">Historial</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 pb-10 no-print">
+      
+      <!-- SECCIÓN INVENTARIO -->
+      <div id="seccion-inventario" class="seccion">
+        <div class="vintage-card mt-5 overflow-hidden">
+          <div class="bg-amber-50/50 px-5 py-3 border-b border-amber-100">
+            <div class="flex justify-between items-center flex-wrap gap-2">
+              <h3 class="font-serif font-medium text-stone-600"><i class="fas fa-heart text-rose-300 mr-2"></i>Mi carrusel de productos <span id="contador-productos" class="text-xs bg-amber-100/80 text-amber-800 px-2.5 py-0.5 rounded-full ml-1 font-sans font-medium"></span></h3>
+              <div class="flex gap-2">
+                <button onclick="exportarDatosCompletos()" class="btn-backup flex items-center gap-1"><i class="fas fa-download"></i> <span class="hidden xs:inline">Exportar</span> Backup</button>
+                <button onclick="document.getElementById('import-file-input').click()" class="btn-backup flex items-center gap-1"><i class="fas fa-upload"></i> <span class="hidden xs:inline">Importar</span> Backup</button>
+                <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importarDatosCompletos(event)">
+              </div>
+            </div>
+            <div class="relative mt-3">
+              <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-amber-400 text-sm"></i>
+              <input id="buscar-inventario" type="text" class="input-vintage w-full pl-10 py-2 text-sm" placeholder="🔍 Buscar producto por nombre..." oninput="filtrarInventario()">
+            </div>
+          </div>
+          <div id="lista-productos" class="divide-y divide-amber-50 max-h-[550px] overflow-y-auto"></div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN VENTAS -->
+      <div id="seccion-ventas" class="seccion active">
+        <div class="mt-5">
+          <div class="vintage-card p-6 border-b-4 border-amber-200">
+            <h2 class="text-center font-serif text-xl font-semibold text-amber-800 flex items-center justify-center gap-2"><i class="fas fa-magnifying-glass"></i> Buscar por código o nombre</h2>
+            <div class="relative mt-3">
+              <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-amber-400 text-lg"></i>
+              <input id="input-barcode" type="text" autofocus class="w-full bg-amber-50/50 border-2 border-amber-200 rounded-3xl py-4 pl-14 pr-5 text-lg focus:border-amber-400 transition" placeholder="🔎 Código de barras o nombre del producto..." onkeydown="if(event.key === 'Enter') { buscarProductoPorCodigoONombre(this.value); this.value = ''; }">
+            </div>
+          </div>
+          
+          <div class="vintage-card mt-6 p-6">
+            <div class="flex justify-between items-center border-b border-amber-100 pb-3">
+              <h2 class="text-xl font-serif flex gap-2"><i class="fas fa-basket-shopping text-amber-600"></i> Carrito</h2>
+              <button onclick="limpiarCarrito()" class="text-rose-400 text-sm bg-rose-50 px-4 py-2 rounded-full hover:bg-rose-100"><i class="fas fa-trash-alt mr-1"></i>Limpiar todo</button>
+            </div>
+            <div id="carrito-items" class="max-h-96 overflow-y-auto space-y-3 mt-3"></div>
+            
+            <div class="mt-8 pt-4 border-t border-dashed border-amber-200">
+              <div class="flex justify-between text-2xl font-bold text-stone-700">
+                <span>🎠 Total:</span> <span id="total-pagar" class="text-amber-700">$0.00</span>
+              </div>
+              <div class="mt-4">
+                <label class="text-sm text-stone-500 ml-2">💵 Monto recibido</label>
+                <input id="dinero-recibido" type="number" step="0.01" class="w-full input-vintage text-2xl text-center font-semibold" placeholder="¿Con cuánto paga?" oninput="calcularCambio()">
+              </div>
+              <div class="mt-3 flex justify-between text-lg font-medium bg-amber-50/70 p-3 rounded-2xl">
+                <span>🔄 Cambio:</span> <span id="cambio" class="text-emerald-700 font-bold">$0.00</span>
+              </div>
+            </div>
+            <button onclick="finalizarVenta()" class="mt-7 w-full btn-primary py-4 rounded-3xl text-lg font-semibold flex items-center justify-center gap-3 shadow-md transition"><i class="fas fa-ticket-alt"></i> Finalizar & Ticket</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN ESTADÍSTICAS -->
+      <div id="seccion-estadisticas" class="seccion">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5" id="stats-periodos"></div>
+        <div class="vintage-card p-6 mt-6">
+          <h2 class="text-center font-serif text-xl text-stone-600 italic"><i class="fas fa-chart-simple"></i> Resumen General Histórico</h2>
+          <div id="estadisticas-content" class="space-y-6 mt-4"></div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN ENTRADAS -->
+      <div id="seccion-entradas" class="seccion">
+        <div class="vintage-card p-5 mt-5">
+          <div class="flex justify-between items-center border-b border-amber-100 pb-3 mb-4 flex-wrap gap-2">
+            <h2 class="text-xl font-serif flex gap-2"><i class="fas fa-dolly"></i> Gestión de Entradas</h2>
+            <span class="text-xs bg-amber-100 px-3 py-1 rounded-full">+ Producto nuevo / + Stock / + Códigos</span>
+          </div>
+          
+          <div class="flex gap-2 mb-5 bg-amber-50/50 rounded-full p-1 w-fit">
+            <button id="btn-tipo-nuevo" onclick="setTipoEntrada('nuevo')" class="px-5 py-2 rounded-full text-sm font-medium transition bg-amber-600 text-white">➕ Producto Nuevo</button>
+            <button id="btn-tipo-stock" onclick="setTipoEntrada('stock')" class="px-5 py-2 rounded-full text-sm font-medium transition bg-transparent text-stone-600">📦 Agregar Stock</button>
+          </div>
+
+          <div id="form-nuevo-producto" class="grid gap-4">
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input id="nuevo-img" type="text" class="input-vintage flex-1" placeholder="🖼️ URL de imagen (opcional)">
+              <label class="btn-primary cursor-pointer px-4 py-3 rounded-3xl text-sm flex items-center justify-center gap-2 font-medium">
+                <i class="fas fa-image"></i> Cargar Foto
+                <input type="file" id="nuevo-file-img" accept="image/*" class="hidden" onchange="convertirImagenABase64(event)">
+              </label>
+            </div>
+            <input id="nuevo-nombre" type="text" class="input-vintage w-full" placeholder="🌸 Nombre del producto *">
+            <input id="nuevo-codigos" type="text" class="input-vintage w-full" placeholder="🏷️ Códigos de barras iniciales (separados por coma)">
+            <div class="grid grid-cols-3 gap-3">
+              <div><label class="text-xs text-stone-500 ml-2">💰 Costo</label><input id="nuevo-costo" type="number" step="0.01" class="input-vintage w-full" oninput="calcularGananciaNuevo()"></div>
+              <div><label class="text-xs text-stone-500 ml-2">💵 Precio</label><input id="nuevo-precio" type="number" step="0.01" class="input-vintage w-full" oninput="calcularGananciaNuevo()"></div>
+              <div><label class="text-xs text-stone-500 ml-2">✨ Ganancia</label><input id="nuevo-ganancia" type="text" class="input-vintage w-full bg-amber-50/40 font-semibold text-amber-700" readonly></div>
+            </div>
+            <input id="nuevo-stock" type="number" class="input-vintage w-full" placeholder="📦 Stock Inicial" value="0">
+            <button onclick="crearProductoNuevo()" class="mt-2 w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-2xl font-medium flex items-center justify-center gap-2 transition"><i class="fas fa-save"></i> Crear Producto</button>
+          </div>
+
+          <div id="form-agregar-stock" class="grid gap-4" style="display: none;">
+            <div class="relative">
+              <label class="text-sm text-stone-600 ml-2">🔍 Buscar producto por nombre</label>
+              <i class="fas fa-search absolute left-4 top-[2.5rem] text-amber-400 text-sm"></i>
+              <input id="buscar-producto-stock" type="text" class="input-vintage w-full pl-10" placeholder="Escribe el nombre del producto..." oninput="filtrarProductosStock()" onkeyup="filtrarProductosStock()">
+              <div id="resultados-busqueda-stock" class="search-results hidden"></div>
+            </div>
+            <input type="hidden" id="selected-producto-id">
+            <div id="producto-seleccionado-info" class="bg-amber-50/50 p-3 rounded-xl text-sm hidden">
+              <div class="font-semibold">📦 <span id="selected-nombre"></span></div>
+              <div class="text-stone-500">Stock actual: <span id="selected-stock-actual">0</span> unidades</div>
+            </div>
+            
+            <div id="codigos-gestion" class="hidden codigo-input-group">
+              <div class="flex items-center gap-2 mb-3">
+                <i class="fas fa-barcode text-amber-600 text-lg"></i>
+                <h4 class="font-semibold text-stone-700">✏️ Editar / Registrar códigos de barras</h4>
+              </div>
+              <p class="text-xs text-stone-500 mb-3">💡 Puedes tener múltiples códigos por producto. Se pueden escanear en Ventas.</p>
+              
+              <div class="mb-3">
+                <label class="text-xs text-stone-600 ml-1">Códigos actuales:</label>
+                <div id="lista-codigos-producto" class="flex flex-wrap gap-2 mt-2 min-h-[40px]"></div>
+              </div>
+              
+              <div class="flex gap-2">
+                <input id="nuevos-codigos-input" type="text" class="input-vintage flex-1" placeholder="Agregar nuevo código (ej: 7501234567890)" style="font-family: monospace;">
+                <button onclick="agregarCodigosProducto()" class="bg-amber-600 text-white px-5 py-2 rounded-xl text-sm hover:bg-amber-700 transition flex items-center gap-1"><i class="fas fa-plus-circle"></i> Agregar</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-sm text-stone-600 ml-2">📦 Cantidad a agregar</label>
+              <input id="cantidad-agregar-stock" type="number" min="1" class="input-vintage w-full" placeholder="Ej: 10">
+            </div>
+            <div>
+              <label class="text-sm text-stone-600 ml-2">📝 Nota / Lote (opcional)</label>
+              <input id="nota-agregar-stock" type="text" class="input-vintage w-full" placeholder="Ej: Compra a proveedor">
+            </div>
+            <button onclick="agregarStockExistente()" class="mt-2 w-full bg-emerald-700 hover:bg-emerald-800 text-white py-3 rounded-2xl font-medium flex items-center justify-center gap-2 transition"><i class="fas fa-plus-circle"></i> Agregar Stock</button>
+          </div>
+        </div>
+
+        <div class="vintage-card mt-6 p-5">
+          <h3 class="font-serif text-lg flex items-center gap-2"><i class="fas fa-clipboard-list text-amber-600"></i> Historial de Entradas</h3>
+          <div id="lista-entradas-agrupadas" class="mt-4 space-y-3 max-h-[400px] overflow-y-auto"></div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN HISTORIAL -->
+      <div id="seccion-historial" class="seccion">
+        <div class="vintage-card p-5 mt-5">
+          <div class="flex justify-between items-center flex-wrap gap-3">
+            <h2 class="text-xl font-serif"><i class="fas fa-receipt"></i> Todas las transacciones</h2>
+            <button onclick="exportarHistorialCSV()" class="bg-stone-700 text-white px-4 py-2 rounded-full text-sm"><i class="fas fa-download"></i> Exportar CSV</button>
+          </div>
+          <div id="historial-ventas-list" class="divide-y divide-amber-100 mt-5 max-h-[500px] overflow-y-auto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL TICKETS -->
+    <div id="modal-ticket" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div class="bg-[#fffaf2] rounded-3xl p-6 max-w-[340px] w-full ticket shadow-2xl border border-amber-200">
+        <div id="contenido-ticket" class="text-stone-700"></div>
+        <div class="flex gap-3 mt-6 no-print">
+          <button onclick="window.print()" class="flex-1 bg-stone-800 text-white py-3 rounded-2xl flex items-center justify-center gap-2"><i class="fas fa-print"></i> Imprimir</button>
+          <button onclick="cerrarModalTicket()" class="flex-1 bg-amber-100 text-amber-800 py-3 rounded-2xl font-medium">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL IMÁGENES -->
+    <div id="modal-imagen-grande" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[60] p-4" onclick="cerrarImagenGrande()">
+      <div class="relative bg-white p-3 rounded-[2rem] border border-amber-100 max-w-lg w-full shadow-2xl" onclick="event.stopPropagation()">
+        <button onclick="cerrarImagenGrande()" class="absolute -top-3 -right-3 bg-rose-400 text-white w-9 h-9 rounded-full shadow-md flex items-center justify-center hover:bg-rose-500 transition">
+          <i class="fas fa-times"></i>
+        </button>
+        <img id="img-grande-src" src="" alt="Vista previa" class="w-full h-auto max-h-[75vh] object-contain rounded-2xl">
+        <p id="img-grande-titulo" class="text-center font-serif text-lg font-medium text-stone-700 mt-3 px-2"></p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= LÓGICAS DEL PUNTO DE VENTA LOCAL ================= -->
+  <script>
+    let productos = JSON.parse(localStorage.getItem('productos')) || [];
+    let ventas = JSON.parse(localStorage.getItem('ventas')) || [];
+    let entradasHistorial = JSON.parse(localStorage.getItem('entradasHistorial')) || [];
+    let carrito = [];
+    let productoStockSeleccionadoId = null;
+    let filtroInventarioActual = '';
+
+    function convertirImagenABase64(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) { document.getElementById('nuevo-img').value = e.target.result; };
+      reader.readAsDataURL(file);
+    }
+
+    function abrirImagenGrande(src, nombre) {
+      const modal = document.getElementById('modal-imagen-grande');
+      const img = document.getElementById('img-grande-src');
+      const titulo = document.getElementById('img-grande-titulo');
+      img.src = src || 'https://cdn-icons-png.flaticon.com/512/3050/3050217.png';
+      titulo.innerText = nombre;
+      modal.classList.remove('hidden');
+    }
+    function cerrarImagenGrande() { document.getElementById('modal-imagen-grande').classList.add('hidden'); }
+
+    function exportarDatosCompletos() {
+      const datosBackup = { productos, ventas, entradasHistorial };
+      const blob = new Blob([JSON.stringify(datosBackup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sweet_carousel_backup.json`;
+      a.click();
+    }
+
+    function importarDatosCompletos(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const contenido = JSON.parse(e.target.result);
+          if (contenido.productos) {
+            productos = contenido.productos; ventas = contenido.ventas || []; entradasHistorial = contenido.entradasHistorial || [];
+            guardarDatos(); renderInventario(); alert("✅ Tienda cargada correctamente.");
+          }
+        } catch(err) { alert("Error al leer archivo."); }
+      };
+      reader.readAsText(file);
+    }
+
+    function asegurarNumero(valor, defecto = 0) { const num = parseFloat(valor); return isNaN(num) ? defecto : num; }
+    function guardarDatos() { 
+      localStorage.setItem('productos', JSON.stringify(productos)); 
+      localStorage.setItem('ventas', JSON.stringify(ventas));
+      localStorage.setItem('entradasHistorial', JSON.stringify(entradasHistorial));
+    }
+    function ordenarAlfabetico(arr) { return [...arr].sort((a,b) => a.nombre.localeCompare(b.nombre)); }
+    function formatearPrecio(precio) { return asegurarNumero(precio).toFixed(2); }
+    function escapeHtml(str) { return !str ? '' : String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+
+    function filtrarInventario() { filtroInventarioActual = document.getElementById('buscar-inventario').value.toLowerCase().trim(); renderInventario(); }
+
+    function renderInventario() {
+      let filtrados = filtroInventarioActual ? productos.filter(p => p.nombre.toLowerCase().includes(filtroInventarioActual)) : productos;
+      const ordenados = ordenarAlfabetico(filtrados);
+      const container = document.getElementById('lista-productos');
+      container.innerHTML = ordenados.map(p => `
+        <div class="p-4 flex gap-4 items-center bg-white/40 hover:bg-amber-50/40 transition">
+          <img src="${p.img || 'https://cdn-icons-png.flaticon.com/512/3050/3050217.png'}" class="product-img object-cover cursor-zoom-in" onclick="abrirImagenGrande('${p.img}','${escapeHtml(p.nombre)}')">
+          <div class="flex-1">
+            <p class="font-semibold text-stone-800">${escapeHtml(p.nombre)}</p>
+            <div class="flex items-center gap-2 mt-1"><span class="font-bold text-amber-700">$${formatearPrecio(p.precio)}</span><span class="stock-badge">📦 ${p.stock}</span></div>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('contador-productos').innerText = `${ordenados.length} productos`;
+    }
+
+    function crearProductoNuevo() {
+      const nombre = document.getElementById('nuevo-nombre').value.trim();
+      if (!nombre) return alert("🌸 El nombre es requerido");
+      const codigosRaw = document.getElementById('nuevo-codigos').value;
+      const codigos = codigosRaw ? codigosRaw.split(',').map(c=>c.trim()).filter(c=>c) : [];
+      
+      productos.push({
+        id: Date.now(),
+        img: document.getElementById('nuevo-img').value.trim() || 'https://cdn-icons-png.flaticon.com/512/3050/3050217.png',
+        nombre, codigos,
+        costo: asegurarNumero(document.getElementById('nuevo-costo').value),
+        precio: asegurarNumero(document.getElementById('nuevo-precio').value),
+        stock: asegurarNumero(document.getElementById('nuevo-stock').value, 0)
+      });
+      guardarDatos(); renderInventario(); alert("✨ Creado con éxito");
+    }
+
+    function calcularGananciaNuevo() {
+      const costo = asegurarNumero(document.getElementById('nuevo-costo').value);
+      const precio = asegurarNumero(document.getElementById('nuevo-precio').value);
+      document.getElementById('nuevo-ganancia').value = '$' + (precio - costo).toFixed(2);
+    }
+
+    function buscarProductoPorCodigoONombre(texto) {
+      if (!texto.trim()) return;
+      const t = texto.trim().toLowerCase();
+      let prod = productos.find(p => p.codigos && p.codigos.includes(texto.trim())) || productos.find(p => p.nombre.toLowerCase().includes(t));
+      if (prod) {
+        if (prod.stock <= 0) return alert("🌸 Sin stock");
+        let item = carrito.find(i => i.id === prod.id);
+        if (item) item.cantidad++; else carrito.push({ ...prod, cantidad: 1 });
+        renderCarrito();
+      } else { alert("🎠 No encontrado"); }
+    }
+
+    function renderCarrito() {
+      let total = 0; const container = document.getElementById('carrito-items');
+      if(!carrito.length) { container.innerHTML = '<p class="text-center text-stone-400 py-4">Carrito vacío</p>'; document.getElementById('total-pagar').innerText = '$0.00'; return; }
+      container.innerHTML = carrito.map((item, idx) => {
+        total += item.precio * item.cantidad;
+        return `<div class="flex justify-between p-3 bg-white rounded-xl border"><div><b>${escapeHtml(item.nombre)}</b><p class="text-xs">$${item.precio} x ${item.cantidad}</p></div></div>`;
+      }).join('');
+      document.getElementById('total-pagar').innerText = '$' + total.toFixed(2); calcularCambio();
+    }
+
+    function calcularCambio() {
+      const t = parseFloat(document.getElementById('total-pagar').innerText.replace('$','')) || 0;
+      const r = parseFloat(document.getElementById('dinero-recibido').value) || 0;
+      document.getElementById('cambio').innerText = '$' + (r >= t ? (r - t).toFixed(2) : '0.00');
+    }
+
+    function finalizarVenta() {
+      if(!carrito.length) return;
+      const total = carrito.reduce((s,i) => s + (i.precio * i.cantidad), 0);
+      carrito.forEach(c => { let o = productos.find(p => p.id === c.id); if(o) o.stock -= c.cantidad; });
+      ventas.push({ id: Date.now(), fecha: new Date().toISOString(), productos: [...carrito], total });
+      guardarDatos(); carrito = []; renderCarrito(); renderInventario(); alert("🎉 Venta completada con éxito");
+    }
+
+    function cambiarSeccion(n) {
+      document.querySelectorAll('.seccion').forEach((s,i)=>s.classList.toggle('active', i===n));
+      document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active', i===n));
+      if(n===0) renderInventario();
+    }
+
+    window.cambiarSeccion = cambiarSeccion; window.buscarProductoPorCodigoONombre = buscarProductoPorCodigoONombre; window.crearProductoNuevo = crearProductoNuevo; window.calcularGananciaNuevo = calcularGananciaNuevo; window.convertirImagenABase64 = convertirImagenABase64; window.finalizarVenta = finalizarVenta; window.calcularCambio = calcularCambio;
+    renderInventario();
+  </script>
+
+  <!-- ================= LÓGICA DE FIREBASE MODULAR (CONEXIÓN SUPERIOR) ================= -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYagTaDf69NVYoMJmQu6CK-J0wikSePpI",
+      authDomain: "posc-2f22d.firebaseapp.com",
+      projectId: "posc-2f22d",
+      storageBucket: "posc-2f22d.firebasestorage.app",
+      messagingSenderId: "51953121889",
+      appId: "1:51953121889:web:eab6df68501210c90f4820",
+      measurementId: "G-SZRWKWLPE6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    const statusText = document.getElementById('status-text');
+    const actionContainer = document.getElementById('login-action-container');
+    const btnLogin = document.getElementById('btn-google-login');
+
+    // Listener de Auth: Cambia la barra de arriba dinámicamente sin interrumpir al usuario
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        statusText.innerHTML = `✨ Conectado como: <b class="text-amber-800">${user.displayName}</b> (Nube Activa)`;
+        actionContainer.innerHTML = `
+          <button id="btn-google-logout" class="bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs rounded-full py-1 px-3 transition active:scale-95">
+            <i class="fas fa-sign-out-alt"></i> Salir
+          </button>
+        `;
+        document.getElementById('btn-google-logout').addEventListener('click', () => signOut(auth));
+      } else {
+        statusText.innerHTML = `<i class="fas fa-wifi-slash text-stone-400"></i> Modo Local (Sin sincronizar)`;
+        actionContainer.innerHTML = `
+          <button id="btn-google-login-new" class="flex items-center gap-2 bg-white hover:bg-[#fffdfa] text-stone-700 border border-[#e8d2b8] rounded-full py-1 px-3.5 shadow-sm transition active:scale-95">
+            <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/web-24dp/logo_googleg_color_24dp.png" alt="Google" class="w-3.5 h-3.5">
+            <span class="font-medium">Respaldar en Google</span>
+          </button>
+        `;
+        document.getElementById('btn-google-login-new').addEventListener('click', iniciarLogin);
+      }
+    });
+
+    function iniciarLogin() {
+      signInWithPopup(auth, provider)
+        .then((result) => console.log("Sincronización activada:", result.user.displayName))
+        .catch((error) => {
+          console.error(error);
+          alert("Asegúrate de que el dominio de tu servidor o de GitHub esté autorizado en la consola de Firebase.");
+        });
+    }
+
+    btnLogin.addEventListener('click', iniciarLogin);
+  </script>
+</body>
+</html>
